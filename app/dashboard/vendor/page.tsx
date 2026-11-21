@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -54,48 +54,34 @@ export default function VendorOverviewPage() {
       try {
         const headers = await getAuthHeaders(true);
 
-        const [pizzasRes, ordersRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/pizzas/vendor/my-pizzas`, {
+        const [menuRes, ordersRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/menu-items/vendor/my-items`, {
             headers,
             credentials: "include",
+            cache: "no-store",
           }),
           fetch(`${API_BASE_URL}/api/orders/vendor`, {
             headers,
             credentials: "include",
+            cache: "no-store",
           }),
         ]);
 
-        const pizzasJson = pizzasRes.ok ? await pizzasRes.json() : { data: [] };
+        const menuJson = menuRes.ok ? await menuRes.json() : { data: [] };
         const ordersJson = ordersRes.ok ? await ordersRes.json() : { data: [] };
 
-        const pizzas = Array.isArray(pizzasJson?.data) ? pizzasJson.data : [];
+        const items = Array.isArray(menuJson?.data) ? menuJson.data : [];
         const orders = Array.isArray(ordersJson?.data) ? ordersJson.data : [];
 
         setStats({
-          totalItems: pizzas.length,
-          approvedItems: pizzas.filter(
-            (p: { isApproved?: boolean }) => p.isApproved
+          totalItems: items.length,
+          approvedItems: items.filter(
+            (item: { status?: string; isApproved?: boolean }) =>
+              item.status?.toLowerCase() === "approved" ||
+              item.isApproved === true
           ).length,
           totalOrders: orders.length,
         });
-
-        const endpoints = [
-          `${API_BASE_URL}/api/subscriptions/status`,
-          `${API_BASE_URL}/api/subscriptions/my-subscription`,
-          `${API_BASE_URL}/api/users/me`,
-        ];
-
-        for (const url of endpoints) {
-          const res = await fetch(url, { headers, credentials: "include" });
-          if (res.ok) {
-            const raw = await res.json();
-            const payload = (raw?.data || raw) as Record<string, unknown>;
-            if (checkPremium(payload)) {
-              setIsPremium(true);
-              break;
-            }
-          }
-        }
       } catch {
         // Ignore transient network errors
       }
@@ -105,7 +91,10 @@ export default function VendorOverviewPage() {
   }, [user]);
 
   const kitchenName =
-    (user?.kitchenName as string) || (user?.name as string) || "Vendor";
+    (user?.businessName as string) ||
+    (user?.kitchenName as string) ||
+    (user?.name as string) ||
+    "Vendor";
 
   return (
     <div className="space-y-8">
@@ -126,7 +115,7 @@ export default function VendorOverviewPage() {
         </div>
 
         <Link
-          href="/dashboard/vendor/add-pizza"
+          href="/dashboard/vendor/add-item"
           className="inline-flex items-center gap-2 self-start rounded-full bg-primary px-6 py-3 text-sm font-extrabold text-primary-foreground shadow-sm transition hover:opacity-90 sm:self-center"
         >
           <Plus className="h-4 w-4" /> Add New Pizza
