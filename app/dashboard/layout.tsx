@@ -9,7 +9,7 @@ import {
   LayoutDashboard,
   Pizza,
   PlusCircle,
-  ShoppingBag,
+  ShoppingBag, Heart,
   Users,
   CheckSquare,
   Crown,
@@ -48,7 +48,7 @@ export default function DashboardLayout({
         image?: string;
         role?: string;
         businessName?: string;
-        subscriptionPlan?: string;
+        isPremium?: boolean;
       }
     | undefined;
 
@@ -65,18 +65,13 @@ export default function DashboardLayout({
     }
   }, [isPending, user, router]);
 
-  if (isPending || !user) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="mt-4 text-sm font-bold text-muted-foreground">
-          Loading your dashboard...
-        </p>
-      </div>
-    );
-  }
+  const inferRoleFromPath = () => {
+    if (pathname?.startsWith("/dashboard/admin")) return "admin";
+    if (pathname?.startsWith("/dashboard/vendor")) return "vendor";
+    return "customer";
+  };
 
-  const role = user.role || "customer";
+  const role = user?.role || inferRoleFromPath();
 
   const roleMenus: Record<string, NavItem[]> = {
     customer: [
@@ -122,6 +117,11 @@ export default function DashboardLayout({
         label: "Premium Plan",
         icon: Crown,
       },
+      {
+        href: "/dashboard/vendor/profile",
+        label: "Profile Settings",
+        icon: User,
+      },
     ],
     admin: [
       {
@@ -138,6 +138,11 @@ export default function DashboardLayout({
         href: "/dashboard/admin/users",
         label: "Manage Users",
         icon: Users,
+      },
+      {
+        href: "/dashboard/admin/profile",
+        label: "Profile Settings",
+        icon: User,
       },
     ],
   };
@@ -186,7 +191,7 @@ export default function DashboardLayout({
 
         <div className="border-b border-sidebar-border p-5">
           <div className="flex items-center gap-3 rounded-2xl bg-sidebar-accent p-3.5">
-            {user.image ? (
+            {user?.image ? (
               <img
                 src={user.image}
                 alt={user.name || "User"}
@@ -194,12 +199,12 @@ export default function DashboardLayout({
               />
             ) : (
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-extrabold text-sidebar-primary-foreground">
-                {(user.name || user.email || "U").charAt(0).toUpperCase()}
+                {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
               </div>
             )}
             <div className="min-w-0">
               <p className="truncate text-sm font-extrabold">
-                {user.businessName || user.name || "PizzaHub User"}
+                {user?.businessName || user?.name || "PizzaHub User"}
               </p>
               <span className="mt-0.5 inline-block rounded-md bg-sidebar-primary/20 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-sidebar-primary">
                 {role}
@@ -303,8 +308,20 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        <main className="flex-1 p-5 sm:p-8">{children}</main>
+        <main className="relative flex-1 p-5 sm:p-8">
+          {isPending && (
+            <div className="mb-4 flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-xs font-semibold text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span>Verifying session...</span>
+            </div>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );
 }
+
+
+
+
