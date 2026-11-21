@@ -1,3 +1,4 @@
+﻿import { Suspense } from "react";
 import type { Metadata } from "next";
 import {
   Plus_Jakarta_Sans,
@@ -50,10 +51,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
+          <Suspense fallback={<div className="h-16 border-b border-border bg-background" />}><Suspense fallback={<div className="h-16 border-b border-border bg-background" />}><Navbar /></Suspense></Suspense>
           {children}
         </ThemeProvider>
       </body>
     </html>
   );
 }
+

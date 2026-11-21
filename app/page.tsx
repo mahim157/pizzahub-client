@@ -379,7 +379,7 @@ export default function Home() {
                         </p>
                         <p className="flex items-center gap-1.5">
                           <MapPin className="h-3.5 w-3.5 text-primary" />
-                          <span>{item.location}</span>
+                          <span>{typeof (item.location as unknown) === "object" && item.location !== null ? `${(item.location as unknown as { area?: string }).area || ""}, ${(item.location as unknown as { city?: string }).city || ""}`.replace(/^,\s*|,\s*$/g, "") : String(item.location || "")}</span>
                         </p>
                       </div>
                     </div>
@@ -776,3 +776,4 @@ export default function Home() {
     </main>
   );
 }
+
