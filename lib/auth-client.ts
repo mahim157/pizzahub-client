@@ -4,8 +4,15 @@ import {
   inferAdditionalFields,
 } from "better-auth/client/plugins";
 
+const getBaseURL = () => {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+};
+
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
+  baseURL: getBaseURL(),
 
   fetchOptions: {
     credentials: "include",
