@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -191,12 +191,12 @@ function BrowseMenuContent() {
   };
 
   const getItemLocation = (item: MenuItem): string => {
-    const itemLocation = item.location;
-    if (typeof itemLocation === "string" && itemLocation.trim()) {
-      return itemLocation;
+    const locObj = item.location as unknown as { area?: string; city?: string } | string | null;
+    if (typeof locObj === "string" && locObj.trim()) {
+      return locObj;
     }
-    if (itemLocation && typeof itemLocation === "object") {
-      const parts = [itemLocation.area, itemLocation.city].filter(Boolean);
+    if (locObj && typeof locObj === "object") {
+      const parts = [locObj.area, locObj.city].filter(Boolean);
       return parts.length > 0 ? parts.join(", ") : "Location unavailable";
     }
     return "Location unavailable";
@@ -574,3 +574,5 @@ export default function MenuPage() {
     </Suspense>
   );
 }
+
+

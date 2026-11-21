@@ -1,6 +1,6 @@
-"use client";
-
-import { useEffect, useState } from "react";
+﻿"use client";
+import { getAuthHeaders } from "@/lib/api";
+import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
@@ -19,6 +19,9 @@ import {
   ShieldAlert,
   CheckCircle2,
   Crown,
+  Heart,
+  Star,
+  Send,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
@@ -37,6 +40,14 @@ type VendorInfo = {
   subscriptionPlan?: string;
 };
 
+type ReviewItem = {
+  customerId: string;
+  customerName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+};
+
 type MenuItem = {
   _id: string;
   itemName?: string;
@@ -51,6 +62,9 @@ type MenuItem = {
   vendorName?: string;
   businessName?: string;
   status?: string;
+  reviews?: ReviewItem[];
+  averageRating?: number;
+  totalReviews?: number;
   createdAt?: string;
 };
 
@@ -60,7 +74,7 @@ type MenuResponse = {
   data?: MenuItem;
 };
 
-export default function MenuDetailsPage() {
+function MenuDetailsContent() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params.id;
@@ -75,6 +89,19 @@ export default function MenuDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
+
+  // Favorite State
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
+
+  // Review States
+  const [rating, setRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewFeedback, setReviewFeedback] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   // Order Form States
   const [showOrderForm, setShowOrderForm] = useState(false);
@@ -162,17 +189,28 @@ export default function MenuDetailsPage() {
         setMenuItem(null);
         setSelectedImage("");
 
-        const response = await fetch(`${API_BASE_URL}/api/menu-items/${id}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          signal: controller.signal,
-          cache: "no-store",
-        });
+        const authHeaders = await getAuthHeaders();
 
-        const result: MenuResponse = await response.json();
+        const [itemRes, favRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/menu-items/${id}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            signal: controller.signal,
+            cache: "no-store",
+          }),
+          fetch(`${API_BASE_URL}/api/menu-items/favorites/my`, {
+            method: "GET",
+            headers: authHeaders,
+            credentials: "include",
+            signal: controller.signal,
+            cache: "no-store",
+          }).catch(() => null),
+        ]);
 
-        if (!response.ok || !result.success || !result.data) {
+        const result: MenuResponse = await itemRes.json();
+
+        if (!itemRes.ok || !result.success || !result.data) {
           throw new Error(
             result.message || "Invalid item ID or menu item not found."
           );
@@ -181,6 +219,12 @@ export default function MenuDetailsPage() {
         setMenuItem(result.data);
         const images = getItemImages(result.data);
         setSelectedImage(images[0] || "");
+
+        if (favRes && favRes.ok) {
+          const favJson = await favRes.json();
+          const favIds: string[] = favJson?.favoriteIds || [];
+          setIsFavorite(favIds.includes(String(result.data._id)));
+        }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
         setError(
@@ -199,6 +243,80 @@ export default function MenuDetailsPage() {
     return () => controller.abort();
   }, [id, retry, isSessionLoading, currentUser]);
 
+  const handleToggleFavorite = async () => {
+    if (!menuItem || favLoading) return;
+    try {
+      setFavLoading(true);
+      const headers = await getAuthHeaders(true);
+      const res = await fetch(
+        `${API_BASE_URL}/api/menu-items/${menuItem._id}/favorite`,
+        {
+          method: "POST",
+          headers,
+          credentials: "include",
+        }
+      );
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsFavorite(Boolean(data.data?.isFavorite));
+      }
+    } catch {
+      // ignore silent toggle errors
+    } finally {
+      setFavLoading(false);
+    }
+  };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!menuItem || !reviewComment.trim()) return;
+    setReviewFeedback(null);
+
+    try {
+      setSubmittingReview(true);
+      const headers = await getAuthHeaders(true);
+      const res = await fetch(
+        `${API_BASE_URL}/api/menu-items/${menuItem._id}/reviews`,
+        {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({
+            rating,
+            comment: reviewComment.trim(),
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to submit review.");
+      }
+
+      setMenuItem((prev) =>
+        prev
+          ? {
+              ...prev,
+              reviews: data.data?.reviews || prev.reviews,
+              averageRating: data.data?.averageRating ?? prev.averageRating,
+              totalReviews: data.data?.totalReviews ?? prev.totalReviews,
+            }
+          : prev
+      );
+      setReviewComment("");
+      setReviewFeedback({
+        type: "success",
+        text: "Thank you! Your review has been published.",
+      });
+    } catch (err) {
+      setReviewFeedback({
+        type: "error",
+        text: err instanceof Error ? err.message : "Could not submit review.",
+      });
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!menuItem || !currentUser) return;
@@ -215,15 +333,10 @@ export default function MenuDetailsPage() {
 
     try {
       setIsOrdering(true);
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
+      const headers = await getAuthHeaders(true);
       const response = await fetch(`${API_BASE_URL}/api/orders`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers,
         credentials: "include",
         body: JSON.stringify({
           itemId: menuItem._id,
@@ -249,7 +362,7 @@ export default function MenuDetailsPage() {
       setMessage("");
 
       setTimeout(() => {
-        router.push("/dashboard/customer");
+        router.push("/dashboard/customer/my-orders");
       }, 1500);
     } catch (err) {
       setOrderFeedback({
@@ -310,6 +423,16 @@ export default function MenuDetailsPage() {
   const images = getItemImages(menuItem);
   const itemName = getItemName(menuItem);
   const vendor = getVendorDetails(menuItem);
+  const reviews = menuItem.reviews || [];
+  const avgRating =
+    menuItem.averageRating ||
+    (reviews.length > 0
+      ? Number(
+          (
+            reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+          ).toFixed(1)
+        )
+      : 0);
 
   const userRole = currentUser?.role || "customer";
   const isAvailableToOrder =
@@ -324,9 +447,8 @@ export default function MenuDetailsPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      {/* Details & Order Section */}
       <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:py-14">
-        <div className="mb-8">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <Link
             href="/menu"
             className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-bold text-foreground transition hover:border-primary hover:text-primary"
@@ -334,6 +456,23 @@ export default function MenuDetailsPage() {
             <ArrowLeft size={15} />
             Back to Browse Menu
           </Link>
+
+          <button
+            type="button"
+            onClick={handleToggleFavorite}
+            disabled={favLoading}
+            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-extrabold transition ${
+              isFavorite
+                ? "border-rose-500/40 bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                : "border-border bg-card text-foreground hover:border-primary hover:text-primary"
+            }`}
+          >
+            <Heart
+              size={15}
+              className={isFavorite ? "fill-rose-500 text-rose-500" : ""}
+            />
+            {isFavorite ? "Saved in Wishlist" : "Save to Wishlist"}
+          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
@@ -410,10 +549,18 @@ export default function MenuDetailsPage() {
               {itemName}
             </h1>
 
-            <div className="mt-4 flex items-center gap-4">
+            <div className="mt-4 flex flex-wrap items-center gap-4">
               <span className="rounded-2xl bg-accent px-4 py-2 text-2xl font-extrabold text-accent-foreground">
                 {formatPrice(menuItem.price)}
               </span>
+
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1.5 text-xs font-extrabold text-amber-600 dark:text-amber-400">
+                <Star size={14} className="fill-amber-500 text-amber-500" />
+                {avgRating > 0
+                  ? `${avgRating} (${reviews.length} reviews)`
+                  : "New (No reviews yet)"}
+              </span>
+
               {!isAvailableToOrder && (
                 <span className="rounded-full bg-destructive/15 px-3.5 py-1 text-xs font-bold text-destructive">
                   Unavailable ({menuItem.status})
@@ -610,7 +757,180 @@ export default function MenuDetailsPage() {
             </div>
           </motion.div>
         </div>
+
+        {/* Customer Reviews & Ratings Section */}
+        <div className="mt-16 border-t border-border pt-12">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">
+                COMMUNITY FEEDBACK
+              </span>
+              <h2 className="mt-1 text-2xl font-extrabold">
+                Customer Reviews &amp; Ratings ({reviews.length})
+              </h2>
+            </div>
+
+            {avgRating > 0 && (
+              <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5">
+                <Star className="h-5 w-5 fill-amber-500 text-amber-500" />
+                <span className="text-lg font-extrabold">{avgRating}</span>
+                <span className="text-xs text-muted-foreground">/ 5.0</span>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
+            {/* Write a Review Form */}
+            <div className="lg:col-span-5">
+              <div className="rounded-3xl border border-border bg-card p-6 shadow-xs">
+                <h3 className="text-base font-extrabold">Rate This Pizza</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Share your taste experience with fellow pizza lovers.
+                </p>
+
+                {userRole !== "customer" ? (
+                  <p className="mt-4 rounded-2xl bg-secondary p-4 text-xs font-semibold text-muted-foreground">
+                    Switch to a Customer account to post a review.
+                  </p>
+                ) : (
+                  <form onSubmit={handleSubmitReview} className="mt-5 space-y-4">
+                    {reviewFeedback && (
+                      <div
+                        className={`rounded-2xl border px-3.5 py-2.5 text-xs font-bold ${
+                          reviewFeedback.type === "success"
+                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "border-destructive/30 bg-destructive/10 text-destructive"
+                        }`}
+                      >
+                        {reviewFeedback.text}
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                        Your Rating
+                      </label>
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            className="rounded-xl border border-border bg-background p-2 transition hover:border-amber-500"
+                          >
+                            <Star
+                              size={20}
+                              className={
+                                star <= rating
+                                  ? "fill-amber-500 text-amber-500"
+                                  : "text-muted-foreground"
+                              }
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                        Your Review *
+                      </label>
+                      <textarea
+                        rows={3}
+                        required
+                        placeholder="How was the crust, cheese, and delivery speed?"
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-xs font-extrabold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+                    >
+                      {submittingReview ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-3.5 w-3.5" />
+                      )}
+                      Submit Review
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+
+            {/* Reviews List */}
+            <div className="space-y-4 lg:col-span-7">
+              {reviews.length === 0 ? (
+                <div className="flex min-h-48 flex-col items-center justify-center rounded-3xl border border-border bg-card p-8 text-center">
+                  <Star className="h-8 w-8 text-muted-foreground/50" />
+                  <p className="mt-3 text-sm font-extrabold">No reviews yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Be the first to review {itemName}!
+                  </p>
+                </div>
+              ) : (
+                reviews.map((rev, idx) => (
+                  <div
+                    key={`${rev.customerId}-${idx}`}
+                    className="rounded-3xl border border-border bg-card p-5 shadow-xs"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-xs font-extrabold text-primary">
+                          {(rev.customerName || "U").charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-extrabold">
+                            {rev.customerName}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {new Date(rev.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            size={12}
+                            className={
+                              i < rev.rating
+                                ? "fill-amber-500 text-amber-500"
+                                : "text-muted-foreground/40"
+                            }
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      {rev.comment}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       </section>
     </main>
+  );
+}
+export default function MenuDetailsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          Loading pizza details...
+        </div>
+      }
+    >
+      <MenuDetailsContent />
+    </Suspense>
   );
 }
