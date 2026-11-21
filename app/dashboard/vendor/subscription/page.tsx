@@ -1,16 +1,64 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Crown, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { API_BASE_URL, getAuthHeaders } from "@/lib/api";
 
 export default function VendorSubscriptionPage() {
   const { data: session } = authClient.useSession();
-  const user = session?.user as { isPremium?: boolean } | undefined;
-  const isPremium = Boolean(user?.isPremium);
+  const user = session?.user as Record<string, unknown> | undefined;
 
+  const checkPremium = (obj: Record<string, unknown> | undefined | null) => {
+    if (!obj) return false;
+    const sub = obj.subscription as Record<string, unknown> | undefined;
+    return Boolean(
+      obj.isPremium === true ||
+        obj.isSubscribed === true ||
+        obj.plan === "premium" ||
+        obj.subscriptionPlan === "premium" ||
+        obj.subscriptionStatus === "active" ||
+        obj.status === "active" ||
+        sub?.status === "active" ||
+        sub?.isPremium === true
+    );
+  };
+
+  const [isPremium, setIsPremium] = useState<boolean>(checkPremium(user));
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (checkPremium(user)) {
+      setIsPremium(true);
+    }
+
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const headers = await getAuthHeaders(true);
+        const endpoints = [
+          `${API_BASE_URL}/api/subscriptions/status`,
+          `${API_BASE_URL}/api/subscriptions/my-subscription`,
+          `${API_BASE_URL}/api/users/me`,
+        ];
+
+        for (const url of endpoints) {
+          const res = await fetch(url, { headers, credentials: "include" });
+          if (res.ok) {
+            const raw = await res.json();
+            const payload = (raw?.data || raw) as Record<string, unknown>;
+            if (checkPremium(payload)) {
+              setIsPremium(true);
+              break;
+            }
+          }
+        }
+      } catch {
+        // Fallback to session state
+      }
+    };
+
+    fetchSubscriptionStatus();
+  }, [user]);
 
   const handleUpgrade = async () => {
     try {
@@ -25,7 +73,14 @@ export default function VendorSubscriptionPage() {
         }
       );
       const data = await res.json();
-      const checkoutUrl = data?.url || data?.data?.url;
+      const checkoutUrl =
+        data?.url ||
+        data?.checkoutUrl ||
+        data?.sessionUrl ||
+        data?.data?.url ||
+        data?.data?.checkoutUrl ||
+        data?.data?.sessionUrl;
+
       if (checkoutUrl) {
         window.location.href = checkoutUrl;
         return;
@@ -123,7 +178,7 @@ export default function VendorSubscriptionPage() {
 
           <div className="mt-8">
             {isPremium ? (
-              <div className="flex items-center justify-center gap-2 rounded-full bg-emerald-500/15 py-3 text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+              <div className="flex items-center justify-center gap-2 rounded-full bg-emerald-500/15 py-3.5 text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
                 <Crown className="h-4 w-4" /> Premium Plan Active
               </div>
             ) : (
