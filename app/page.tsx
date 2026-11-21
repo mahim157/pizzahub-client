@@ -1,344 +1,468 @@
-﻿
-"use client";
+﻿"use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
+import {
+  Flame,
+  MapPin,
+  ArrowUpRight,
+  Sparkles,
+  Clock,
+  ShieldCheck,
+  ChefHat,
+  UtensilsCrossed,
+  Star,
+  Crown,
+  CheckCircle2,
+} from "lucide-react";
 
-const pizzas = [
+interface MenuItem {
+  _id: string;
+  itemName: string;
+  category: string;
+  price: number;
+  location: string;
+  images: string[];
+  vendorId?: {
+    name?: string;
+    businessName?: string;
+    subscriptionPlan?: string;
+  };
+}
+
+const fallbackPizzas: MenuItem[] = [
   {
-    name: "Classic Margherita",
-    category: "Classic Pizza",
-    price: 450,
-    rating: "4.9",
-    vendor: "Italian Oven",
+    _id: "1",
+    itemName: "Wood-Fired Margherita",
+    category: "Classic Pizzas",
+    price: 480,
     location: "Dhanmondi, Dhaka",
-    image:
+    images: [
       "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=900&q=85",
-    label: "CUSTOMER FAVORITE",
+    ],
+    vendorId: { businessName: "Bella Napoli Oven", subscriptionPlan: "premium" },
   },
   {
-    name: "Double Pepperoni",
+    _id: "2",
+    itemName: "Smoky Double Pepperoni",
     category: "Meat Lovers",
-    price: 650,
-    rating: "5.0",
-    vendor: "Pizza Corner",
-    location: "Uttara, Dhaka",
-    image:
+    price: 690,
+    location: "Gulshan, Dhaka",
+    images: [
       "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=900&q=85",
-    label: "BESTSELLER",
+    ],
+    vendorId: { businessName: "Crust & Ember", subscriptionPlan: "premium" },
   },
   {
-    name: "Garden Fresh",
-    category: "Vegetarian",
-    price: 520,
-    rating: "4.8",
-    vendor: "Green Slice",
-    location: "Mirpur, Dhaka",
-    image:
-      "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=900&q=85",
-    label: "FRESH PICK",
-  },
-  {
-    name: "Cheese Overload",
-    category: "Specialty Pizza",
-    price: 590,
-    rating: "4.9",
-    vendor: "Cheese House",
-    location: "Banani, Dhaka",
-    image:
-      "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=900&q=85",
-    label: "CHEESE LOVER",
-  },
-  {
-    name: "Italian Supreme",
-    category: "Specialty Pizza",
-    price: 720,
-    rating: "4.8",
-    vendor: "Italian Oven",
-    location: "Dhanmondi, Dhaka",
-    image:
-      "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?w=900&q=85",
-    label: "CHEF'S CHOICE",
-  },
-  {
-    name: "Chicken BBQ",
-    category: "Meat Lovers",
-    price: 680,
-    rating: "4.9",
-    vendor: "Pizza Corner",
+    _id: "3",
+    itemName: "Tuscan Garden Veggie",
+    category: "Vegetarian Pizzas",
+    price: 540,
     location: "Uttara, Dhaka",
-    image:
-      "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=900&q=85",
-    label: "POPULAR PICK",
+    images: [
+      "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=900&q=85",
+    ],
+    vendorId: { businessName: "Green Slice Kitchen", subscriptionPlan: "free" },
+  },
+  {
+    _id: "4",
+    itemName: "Truffle Four-Cheese Melt",
+    category: "Specialty / Gourmet Pizzas",
+    price: 780,
+    location: "Banani, Dhaka",
+    images: [
+      "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=900&q=85",
+    ],
+    vendorId: { businessName: "Artisan Dough Co.", subscriptionPlan: "premium" },
+  },
+  {
+    _id: "5",
+    itemName: "Roasted Garlic Mozzarella Knots",
+    category: "Sides & Appetizers",
+    price: 260,
+    location: "Mirpur, Dhaka",
+    images: [
+      "https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?w=900&q=85",
+    ],
+    vendorId: { businessName: "Pizza Corner", subscriptionPlan: "free" },
+  },
+  {
+    _id: "6",
+    itemName: "Warm Choco Lava & Tiramisu Cup",
+    category: "Beverages & Desserts",
+    price: 320,
+    location: "Dhanmondi, Dhaka",
+    images: [
+      "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=900&q=85",
+    ],
+    vendorId: { businessName: "Sweet Crust Cafe", subscriptionPlan: "premium" },
   },
 ];
 
 const categories = [
   {
     name: "Classic Pizzas",
-    description: "Timeless recipes and familiar flavors.",
+    tagline: "Timeless marinara & melted mozzarella",
     image:
       "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600&q=80",
   },
   {
-    name: "Vegetarian",
-    description: "Fresh ingredients in every slice.",
+    name: "Vegetarian Pizzas",
+    tagline: "Farm-fresh herbs, olives & roasted veggies",
     image:
       "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=600&q=80",
   },
   {
     name: "Meat Lovers",
-    description: "Rich toppings for hearty cravings.",
+    tagline: "Loaded pepperoni, smoky beef & grilled chicken",
     image:
       "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=600&q=80",
   },
   {
-    name: "Specialty Pizzas",
-    description: "Unique combinations worth exploring.",
+    name: "Specialty / Gourmet Pizzas",
+    tagline: "Chef-crafted artisan blends & truffle infusions",
     image:
       "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80",
   },
+  {
+    name: "Sides & Appetizers",
+    tagline: "Crispy garlic bread, wings & cheesy dips",
+    image:
+      "https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?w=600&q=80",
+  },
+  {
+    name: "Beverages & Desserts",
+    tagline: "Chilled craft sodas & oven-warm sweet treats",
+    image:
+      "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=600&q=80",
+  },
 ];
 
-const features = [
-  {
-    number: "01",
-    title: "Discover Local Pizza Vendors",
-    description:
-      "Explore menus from local pizza businesses, compare different options, and find something delicious for your next meal.",
-  },
-  {
-    number: "02",
-    title: "Explore More Choices",
-    description:
-      "Browse a variety of pizza styles, ingredients, and prices to find the flavors that match your preferences.",
-  },
-  {
-    number: "03",
-    title: "Enjoy Convenient Ordering",
-    description:
-      "Place your orders online, manage your purchases, and keep track of order updates from your personal account.",
-  },
+const marqueeTags = [
+  "STONE-BAKED ARTISAN CRUSTS",
+  "48-HOUR COLD-FERMENTED DOUGH",
+  "VERIFIED LOCAL PIZZERIAS",
+  "REAL-TIME ORDER TRACKING",
+  "FRESH MOZZARELLA & BASIL",
+  "SCHEDULED DOORSTEP DELIVERY",
 ];
 
 export default function Home() {
+  const [featuredItems, setFeaturedItems] = useState<MenuItem[]>(fallbackPizzas);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const res = await fetch(`${baseUrl}/api/menu-items?limit=6`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = data?.data || data?.menuItems || [];
+        if (Array.isArray(items) && items.length >= 6) {
+          setFeaturedItems(items.slice(0, 6));
+        }
+      } catch {
+        // Keep fallback items if backend is offline
+      }
+    };
+    fetchFeatured();
+  }, []);
+
   return (
-    <main className="min-h-screen overflow-hidden bg-[#F4F6FA] text-[#192238]">
-
-      {/* Announcement */}
-      <div className="bg-[#F06A35] px-4 py-2.5 text-center text-[11px] font-bold tracking-[0.16em] text-white sm:text-xs">
-        DISCOVER LOCAL PIZZA. EXPLORE GREAT FLAVORS. ORDER WITH EASE.
-      </div>
-
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-[#DFE4ED] bg-[#F4F6FA]/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-19.5 max-w-360 items-center justify-between px-5 sm:px-8 lg:px-14">
-
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#F06A35] text-2xl font-bold text-white">
-              P
-            </span>
-            <span className="text-[25px] font-black tracking-[-0.07em]">
-              pizza<span className="text-[#F06A35]">hub.</span>
-            </span>
-          </Link>
-
-          <nav className="hidden items-center gap-9 text-[13px] font-semibold text-[#68738A] lg:flex">
-            <Link href="/" className="text-[#F06A35]">
-              Home
-            </Link>
-            <Link href="/menu" className="transition hover:text-[#F06A35]">
-              Explore Menu
-            </Link>
-            <a href="#categories" className="transition hover:text-[#F06A35]">
-              Categories
-            </a>
-            <a href="#about" className="transition hover:text-[#F06A35]">
-              About Us
-            </a>
-            <a href="#vendor" className="transition hover:text-[#F06A35]">
-              For Vendors
-            </a>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="hidden px-3 py-3 text-sm font-bold transition hover:text-[#F06A35] sm:block"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-full bg-[#F06A35] px-5 py-3.5 text-xs font-bold text-white transition hover:bg-[#D95628] sm:px-6 sm:text-sm"
-            >
-              Get Started <span className="ml-1">↗</span>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="relative">
-        <div className="mx-auto grid max-w-360 items-center gap-12 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:px-14 lg:py-24">
-
+    <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
+      {/* Editorial Split Hero Section */}
+      <section className="relative py-14 sm:py-20 lg:py-24">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-12 lg:px-12">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="relative z-10"
+            transition={{ duration: 0.55 }}
+            className="lg:col-span-6"
           >
-            <div className="mb-8 flex items-center gap-3">
-              <span className="h-0.5 w-10 bg-[#F06A35]" />
-              <p className="text-[11px] font-black tracking-[0.23em] text-[#F06A35]">
-                YOUR FAVORITE PIZZA STARTS HERE
-              </p>
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-accent px-4 py-1.5 text-xs font-extrabold tracking-wide text-accent-foreground">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              ARTISAN WOOD-FIRED MARKETPLACE
             </div>
 
-            <h1 className="max-w-175 text-[54px] leading-[1.04] font-black tracking-[-0.075em] sm:text-7xl lg:text-[88px]">
-              Discover
-              <br />
-              your next
-              <br />
-              <span className="font-serif font-medium italic text-[#F06A35]">
-                favorite slice.
-              </span>
+            <h1 className="mt-6 text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-6xl lg:text-[66px]">
+              Crafted in Fire.{" "}
+              <span className="font-serif italic font-bold text-primary">
+                Delivered
+              </span>{" "}
+              Hot &amp; Fresh.
             </h1>
 
-            <p className="mt-8 max-w-122.5 text-[15px] leading-8 text-[#68738A] sm:text-base">
-              Explore delicious pizzas from local vendors, discover new
-              flavors, and find the perfect meal for every craving.
-              Your next favorite pizza is waiting for you at PizzaHub.
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Discover independent neighborhood pizzerias, explore 6 curated
+              categories, and schedule fresh oven-baked deliveries straight to
+              your doorstep.
             </p>
 
-            <div className="mt-9 flex flex-wrap items-center gap-4">
+            <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
                 href="/menu"
-                className="rounded-full bg-[#F06A35] px-8 py-4 text-sm font-bold text-white shadow-lg shadow-orange-900/10 transition hover:-translate-y-1 hover:bg-[#D95628]"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-sm font-extrabold text-primary-foreground shadow-md transition hover:-translate-y-0.5 hover:opacity-95"
               >
-                Explore Our Menu <span className="ml-3">↗</span>
+                Explore Full Menu <ArrowUpRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/register"
-                className="rounded-full border border-[#DFE4ED] px-8 py-4 text-sm font-bold transition hover:border-[#F06A35] hover:text-[#F06A35]"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-7 py-4 text-sm font-bold text-foreground transition hover:border-primary hover:text-primary"
               >
-                Join PizzaHub
+                <ChefHat className="h-4 w-4 text-primary" />
+                Join as Vendor
               </Link>
             </div>
 
-            <div className="mt-14 grid max-w-120 grid-cols-3 border-t border-[#DFE4ED] pt-7">
+            {/* Minimalist Metric Bar */}
+            <div className="mt-12 grid grid-cols-3 gap-4 border-t border-border pt-7">
               <div>
-                <p className="text-2xl font-black tracking-tight">Local</p>
-                <p className="mt-1 text-[10px] font-semibold tracking-wide text-[#68738A] sm:text-xs">
-                  PIZZA BUSINESSES
+                <p className="text-2xl font-extrabold text-primary">450°C</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                  Stone-Oven Baked
                 </p>
               </div>
-              <div className="border-x border-[#DFE4ED] px-5">
-                <p className="text-2xl font-black tracking-tight">Variety</p>
-                <p className="mt-1 text-[10px] font-semibold tracking-wide text-[#68738A] sm:text-xs">
-                  FLAVORS & CHOICES
+              <div className="border-x border-border px-4">
+                <p className="text-2xl font-extrabold">100%</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                  Admin-Verified Kitchens
                 </p>
               </div>
-              <div className="pl-5">
-                <p className="text-2xl font-black tracking-tight">Simple</p>
-                <p className="mt-1 text-[10px] font-semibold tracking-wide text-[#68738A] sm:text-xs">
-                  ONLINE ORDERING
+              <div>
+                <p className="text-2xl font-extrabold text-primary">Live</p>
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                  Order Status Updates
                 </p>
               </div>
             </div>
           </motion.div>
 
+          {/* Hero Showcase Card */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-            className="relative mx-auto w-full max-w-147.5"
+            transition={{ duration: 0.65 }}
+            className="lg:col-span-6"
           >
-            <div className="absolute -right-5 -top-5 h-36 w-36 rounded-full border border-[#F06A35]/20" />
-            <div className="relative overflow-hidden rounded-[220px_220px_22px_22px] bg-[#E8ECF4] p-3">
-              <img
-                src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200&q=90"
-                alt="Freshly prepared pizza with delicious toppings"
-                className="h-105 w-full rounded-[210px_210px_15px_15px] object-cover sm:h-142.5"
-              />
-            </div>
+            <div className="relative mx-auto max-w-xl overflow-hidden rounded-[32px] border border-border bg-card p-3 shadow-xl">
+              <div className="relative overflow-hidden rounded-[24px]">
+                <img
+                  src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200&q=90"
+                  alt="Artisan wood-fired pizza"
+                  className="h-95 w-full object-cover sm:h-120"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/15 to-transparent" />
 
-            <div className="absolute -bottom-5 left-2 rounded-2xl border border-[#DFE4ED] bg-white p-4 shadow-xl sm:-left-8 sm:p-5">
-              <p className="text-[10px] font-black tracking-[0.18em] text-[#F06A35]">
-                MADE FOR PIZZA LOVERS
-              </p>
-              <p className="mt-1 text-lg font-black">
-                Find your perfect slice.
-              </p>
-            </div>
+                <div className="absolute left-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-black/70 px-3.5 py-1.5 text-xs font-bold text-white backdrop-blur-md">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  Top Rated Local Pizzerias
+                </div>
 
-            <div className="absolute right-1 top-12 rounded-full bg-[#F06A35] px-5 py-3 text-xs font-black tracking-wide text-white shadow-lg sm:-right-5">
-              EXPLORE. CHOOSE. ENJOY.
+                <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between rounded-2xl border border-white/15 bg-black/75 p-4 text-white backdrop-blur-md">
+                  <div>
+                    <p className="text-[11px] font-extrabold uppercase tracking-widest text-amber-400">
+                      Signature Selection
+                    </p>
+                    <p className="mt-0.5 text-base font-extrabold">
+                      Hand-Stretched Sourdough Crusts
+                    </p>
+                  </div>
+                  <Link
+                    href="/menu"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:scale-105"
+                    aria-label="Explore menu"
+                  >
+                    <ArrowUpRight className="h-5 w-5" />
+                  </Link>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Category Section */}
-      <section id="categories" className="border-y border-[#DFE4ED] bg-[#E8ECF4] py-20">
-        <div className="mx-auto max-w-360 px-5 sm:px-8 lg:px-14">
-          <div className="mb-11 flex flex-wrap items-end justify-between gap-5">
+      {/* Dynamic Marquee Ticker */}
+      <div className="overflow-hidden border-y border-border bg-secondary py-3.5">
+        <div className="animate-marquee flex items-center gap-8">
+          {[...marqueeTags, ...marqueeTags].map((tag, idx) => (
+            <div
+              key={`${tag}-${idx}`}
+              className="flex items-center gap-8 whitespace-nowrap text-xs font-extrabold tracking-[0.2em] text-foreground"
+            >
+              <span>{tag}</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Dynamic Section 1: Featured Menu Items */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
+          <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-[11px] font-black tracking-[0.2em] text-[#F06A35]">
-                EXPLORE DIFFERENT FLAVORS
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">
+                CURATED FOR YOU
               </p>
-              <h2 className="mt-3 text-4xl font-black tracking-[-0.055em] sm:text-5xl">
-                Find the pizza you love.
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Featured Menu Items
               </h2>
-              <p className="mt-4 max-w-lg text-sm leading-7 text-[#68738A]">
-                From classic recipes to exciting combinations,
-                explore different styles and discover your next favorite.
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                Explore approved dishes from verified local pizzerias. Inspect
+                full details and place your order in seconds.
               </p>
             </div>
 
             <Link
               href="/menu"
-              className="text-sm font-bold text-[#F06A35] transition hover:translate-x-1"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-6 py-3 text-sm font-bold text-foreground transition hover:border-primary hover:text-primary"
             >
-              Explore All Categories ↗
+              View All Dishes <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredItems.map((item, index) => {
+              const vendorName =
+                item.vendorId?.businessName ||
+                item.vendorId?.name ||
+                "Verified Kitchen";
+              const isPremium = item.vendorId?.subscriptionPlan === "premium";
+
+              return (
+                <motion.article
+                  key={item._id}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: (index % 3) * 0.08 }}
+                  className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-xs transition duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg"
+                >
+                  <div className="relative h-56 w-full shrink-0 overflow-hidden bg-muted">
+                    <img
+                      src={
+                        item.images?.[0] ||
+                        "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=900&q=85"
+                      }
+                      alt={item.itemName}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    <span className="absolute left-4 top-4 rounded-full bg-background/90 px-3 py-1 text-[11px] font-extrabold text-foreground backdrop-blur-md">
+                      {item.category}
+                    </span>
+                    {isPremium && (
+                      <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-[11px] font-extrabold text-primary-foreground shadow-xs">
+                        <Crown className="h-3 w-3" /> Premium
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-1 flex-col justify-between p-6">
+                    <div>
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="line-clamp-1 text-xl font-extrabold">
+                          {item.itemName}
+                        </h3>
+                        <span className="shrink-0 rounded-xl bg-accent px-3 py-1 text-base font-extrabold text-accent-foreground">
+                          ৳{item.price}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 space-y-1.5 text-xs font-medium text-muted-foreground">
+                        <p className="flex items-center gap-1.5">
+                          <UtensilsCrossed className="h-3.5 w-3.5 text-primary" />
+                          <span className="font-semibold text-foreground">
+                            {vendorName}
+                          </span>
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 text-primary" />
+                          <span>{item.location}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 border-t border-border pt-4">
+                      <Link
+                        href={`/menu/${item._id}`}
+                        className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:opacity-90"
+                      >
+                        View Details <ArrowUpRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Dynamic Section 2: 6 Pizza Categories */}
+      <section
+        id="categories"
+        className="border-y border-border bg-secondary/60 py-20 sm:py-24"
+      >
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
+          <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">
+                BROWSE BY STYLE
+              </p>
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                6 Signature Categories
+              </h2>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                Select any category to filter matching dishes directly on the
+                menu page.
+              </p>
+            </div>
+
+            <Link
+              href="/menu"
+              className="inline-flex items-center gap-1.5 text-sm font-extrabold text-primary transition hover:translate-x-1"
+            >
+              Explore Full Menu <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {categories.map((category, index) => (
               <motion.div
                 key={category.name}
-                initial={{ opacity: 0, y: 25 }}
+                initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: (index % 3) * 0.08 }}
               >
                 <Link
-                  href="/menu"
-                  className="group relative block h-70 overflow-hidden rounded-2xl bg-[#DFE4ED]"
+                  href={`/menu?category=${encodeURIComponent(category.name)}`}
+                  className="group relative flex h-64 flex-col justify-end overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-xs"
                 >
                   <img
                     src={category.image}
                     alt={category.name}
-                    className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                    className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/10 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent" />
 
-                  <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                    <p className="text-[10px] font-bold tracking-[0.2em] text-white/70">
-                      EXPLORE CATEGORY
-                    </p>
-                    <h3 className="mt-2 text-2xl font-black">
-                      {category.name}
-                    </h3>
-                    <div className="mt-3 flex items-center justify-between">
-                      <p className="text-xs text-white/80">
-                        {category.description}
-                      </p>
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/60 transition group-hover:bg-white group-hover:text-black">
-                        ↗
+                  <div className="relative z-10 flex items-end justify-between gap-3 text-white">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-widest text-amber-400">
+                        0{index + 1} · Category
                       </span>
+                      <h3 className="mt-1 text-xl font-extrabold">
+                        {category.name}
+                      </h3>
+                      <p className="mt-1 text-xs text-white/80">
+                        {category.tagline}
+                      </p>
                     </div>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition group-hover:scale-105">
+                      <ArrowUpRight className="h-5 w-5" />
+                    </span>
                   </div>
                 </Link>
               </motion.div>
@@ -347,294 +471,306 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Menu */}
-      <section className="py-24">
-        <div className="mx-auto max-w-360 px-5 sm:px-8 lg:px-14">
-
-          <div className="mb-12 flex flex-wrap items-end justify-between gap-5">
-            <div>
-              <p className="text-[11px] font-black tracking-[0.2em] text-[#F06A35]">
-                EXPLORE OUR SELECTION
-              </p>
-              <h2 className="mt-3 text-4xl font-black tracking-[-0.055em] sm:text-5xl">
-                Something delicious awaits.
-              </h2>
-              <p className="mt-4 max-w-lg text-sm leading-7 text-[#68738A]">
-                Take a look at our featured pizza selections.
-                Discover different flavors and explore what local vendors
-                have to offer.
-              </p>
-            </div>
-
-            <Link
-              href="/menu"
-              className="rounded-full border border-[#F06A35] px-6 py-3 text-sm font-bold text-[#F06A35] transition hover:bg-[#F06A35] hover:text-white"
-            >
-              Browse Full Menu ↗
-            </Link>
-          </div>
-
-          <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-            {pizzas.map((pizza, index) => (
-              <motion.article
-                key={pizza.name}
-                initial={{ opacity: 0, y: 25 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: (index % 3) * 0.1 }}
-                className="group"
-              >
-                <Link
-                  href="/menu"
-                  className="relative block overflow-hidden rounded-2xl bg-[#E8ECF4]"
-                >
-                  <img
-                    src={pizza.image}
-                    alt={pizza.name}
-                    className="h-65 w-full object-cover transition duration-700 group-hover:scale-105 sm:h-72.5"
-                  />
-
-                  <span className="absolute left-4 top-4 rounded-full bg-[#F4F6FA] px-3 py-2 text-[9px] font-black tracking-[0.12em] text-[#F06A35]">
-                    {pizza.label}
-                  </span>
-
-                  <span className="absolute right-4 top-4 rounded-full bg-white/95 px-3 py-2 text-xs font-bold text-[#192238]">
-                    ★ {pizza.rating}
-                  </span>
-
-                  <span className="absolute bottom-4 right-4 flex h-11 w-11 items-center justify-center rounded-full bg-[#F06A35] text-xl text-white shadow-lg transition group-hover:rotate-45">
-                    ↗
-                  </span>
-                </Link>
-
-                <div className="flex items-start justify-between gap-3 pt-5">
-                  <div>
-                    <p className="text-[10px] font-black tracking-[0.15em] text-[#F06A35]">
-                      {pizza.category.toUpperCase()}
-                    </p>
-                    <h3 className="mt-2 text-xl font-black tracking-tight">
-                      {pizza.name}
-                    </h3>
-                    <p className="mt-2 text-xs text-[#68738A]">
-                      {pizza.vendor} · {pizza.location}
-                    </p>
-                  </div>
-
-                  <p className="shrink-0 text-xl font-black">
-                    ৳{pizza.price}
-                  </p>
-                </div>
-
-                <div className="mt-5 border-t border-[#DFE4ED] pt-4">
-                  <Link
-                    href="/menu"
-                    className="flex items-center justify-between text-xs font-bold transition hover:text-[#F06A35]"
-                  >
-                    Explore This Pizza
-                    <span>→</span>
-                  </Link>
-                </div>
-              </motion.article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About / Why PizzaHub */}
-      <section id="about" className="bg-[#151D32] py-24 text-[#F4F6FA]">
-        <div className="mx-auto grid max-w-360 gap-14 px-5 sm:px-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-24 lg:px-14">
-
-          <div>
-            <p className="text-[11px] font-black tracking-[0.2em] text-[#FFB45B]">
-              WHY CHOOSE PIZZAHUB?
+      {/* Extra Section 1: Asymmetric Bento Grid — Why Choose PizzaHub? */}
+      <section id="why-us" className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
+          <div className="mb-12 max-w-2xl">
+            <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">
+              THE PIZZAHUB DIFFERENCE
             </p>
-
-            <h2 className="mt-5 text-5xl leading-[1.08] font-black tracking-[-0.065em] sm:text-6xl">
-              Great pizza.
-              <br />
-              More choices.
-              <br />
-              <span className="font-serif font-medium italic text-[#FFB45B]">
-                Better together.
-              </span>
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Why Choose PizzaHub?
             </h2>
-
-            <p className="mt-7 max-w-md text-sm leading-8 text-white/55">
-              PizzaHub connects pizza lovers with local pizza businesses
-              through one convenient platform. Discover different menus,
-              explore new flavors, and enjoy a simpler way to order your
-              favorite food.
-            </p>
-
-            <Link
-              href="/menu"
-              className="mt-9 inline-flex rounded-full bg-[#F06A35] px-7 py-4 text-sm font-bold text-white transition hover:bg-[#D95628]"
-            >
-              Discover Our Menu ↗
-            </Link>
           </div>
 
-          <div className="divide-y divide-white/15 border-y border-white/15">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.number}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.12 }}
-                className="grid gap-4 py-8 sm:grid-cols-[70px_1fr] sm:gap-7"
-              >
-                <p className="text-sm font-black text-[#FFB45B]">
-                  / {feature.number}
-                </p>
-
-                <div>
-                  <h3 className="text-2xl font-black tracking-tight">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-3 max-w-lg text-sm leading-7 text-white/55">
-                    {feature.description}
-                  </p>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <div className="flex flex-col justify-between rounded-3xl border border-border bg-card p-8 shadow-xs lg:col-span-7">
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-primary">
+                  <Flame className="h-6 w-6" />
                 </div>
-              </motion.div>
-            ))}
+                <h3 className="mt-6 text-2xl font-extrabold">
+                  Authentic Artisan Craftsmanship From Verified Local Kitchens
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  Every pizzeria on PizzaHub is reviewed by platform admins
+                  before publishing their menu. Enjoy hand-stretched crusts,
+                  rich sauces, and fresh toppings prepared only after you
+                  place your order.
+                </p>
+              </div>
+              <div className="mt-8 flex flex-wrap gap-3">
+                {[
+                  "Admin-Approved Menus",
+                  "No Hidden Charges",
+                  "Fresh Dough Daily",
+                ].map((badge) => (
+                  <span
+                    key={badge}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3.5 py-1.5 text-xs font-bold text-foreground"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-6 lg:col-span-5">
+              <div className="rounded-3xl border border-border bg-card p-7 shadow-xs">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-primary">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+                <h3 className="mt-4 text-xl font-extrabold">
+                  Role-Based Security &amp; Trust
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Dedicated dashboards for Customers, Vendors, and Admins keep
+                  orders, menus, and subscriptions transparent and secure.
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-border bg-card p-7 shadow-xs">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-primary">
+                  <Clock className="h-6 w-6" />
+                </div>
+                <h3 className="mt-4 text-xl font-extrabold">
+                  Scheduled Delivery &amp; Live Status
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Pick your preferred delivery date, add special crust notes,
+                  and track every step from Pending to Delivered.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Vendor Promotion */}
-      <section id="vendor" className="py-24">
-        <div className="mx-auto max-w-360 px-5 sm:px-8 lg:px-14">
-          <div className="grid overflow-hidden rounded-[28px] bg-[#E8ECF4] lg:grid-cols-2">
-
-            <div className="flex flex-col justify-center p-8 sm:p-12 lg:p-16">
-              <p className="text-[11px] font-black tracking-[0.2em] text-[#F06A35]">
-                GROW YOUR BUSINESS WITH PIZZAHUB
+      {/* Extra Section 2: How PizzaHub Works + Vendor CTA */}
+      <section
+        id="how-it-works"
+        className="border-t border-border bg-secondary/60 py-20 sm:py-24"
+      >
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">
+                3 SIMPLE STEPS
               </p>
-
-              <h2 className="mt-5 text-4xl leading-[1.1] font-black tracking-[-0.06em] sm:text-5xl">
-                Your pizza business
-                <br />
-                deserves to grow.
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                How PizzaHub Works
               </h2>
+            </div>
+            <Link
+              href="/menu"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition hover:opacity-90"
+            >
+              Order Your Pizza <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
 
-              <p className="mt-6 max-w-md text-sm leading-8 text-[#68738A]">
-                Take your pizza business online with PizzaHub.
-                Create your vendor account, showcase your menu,
-                manage customer orders, and connect with people
-                looking for their next favorite pizza.
+          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {[
+              {
+                step: "01",
+                title: "Explore & Filter Menu",
+                description:
+                  "Search by pizza name, filter across 6 categories or areas, and compare prices effortlessly.",
+              },
+              {
+                step: "02",
+                title: "Schedule Your Delivery",
+                description:
+                  "Sign in as a Customer, choose your delivery date, enter your address, and add custom instructions.",
+              },
+              {
+                step: "03",
+                title: "Track Live From Oven",
+                description:
+                  "Watch your order status update in real time as the restaurant prepares and delivers your meal.",
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className="rounded-3xl border border-border bg-card p-8 shadow-xs"
+              >
+                <span className="inline-block rounded-xl bg-accent px-3.5 py-1.5 text-xs font-extrabold tracking-wider text-accent-foreground">
+                  STEP {item.step}
+                </span>
+                <h3 className="mt-5 text-xl font-extrabold">{item.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Vendor Growth Banner */}
+          <div className="mt-14 grid items-center gap-8 rounded-3xl border border-border bg-card p-8 shadow-sm sm:p-12 lg:grid-cols-12">
+            <div className="lg:col-span-8">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1 text-xs font-extrabold text-accent-foreground">
+                <ChefHat className="h-4 w-4 text-primary" /> PARTNER WITH US
+              </span>
+              <h3 className="mt-4 text-2xl font-extrabold sm:text-3xl">
+                Own a Pizzeria? Start Selling on PizzaHub
+              </h3>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                Create your vendor account, list up to 3 items free, or upgrade
+                to Premium via Stripe for unlimited menu listings and featured
+                placement.
               </p>
-
-              <div className="mt-9">
-                <Link
-                  href="/register"
-                  className="inline-flex rounded-full bg-[#F06A35] px-8 py-4 text-sm font-bold text-white transition hover:bg-[#D95628]"
-                >
-                  Become a Vendor ↗
-                </Link>
-              </div>
             </div>
-
-            <div className="relative min-h-80 lg:min-h-122.5">
-              <img
-                src="https://images.unsplash.com/photo-1579751626657-72bc17010498?w=1200&q=85"
-                alt="Pizza chef preparing a fresh pizza"
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-
-              <div className="absolute inset-0 bg-linear-to-r from-[#E8ECF4]/20 to-transparent" />
-
-              <div className="absolute bottom-7 left-7 rounded-2xl bg-white p-5 shadow-xl">
-                <p className="text-[10px] font-black tracking-[0.16em] text-[#F06A35]">
-                  JOIN OUR VENDOR COMMUNITY
-                </p>
-                <p className="mt-1 text-lg font-black">
-                  Share your passion for pizza.
-                </p>
-              </div>
+            <div className="flex lg:col-span-4 lg:justify-end">
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-7 py-4 text-sm font-extrabold text-primary-foreground shadow-sm transition hover:opacity-90"
+              >
+                Register as Vendor <ArrowUpRight className="h-4 w-4" />
+              </Link>
             </div>
-
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#151D32] text-white">
-        <div className="mx-auto grid max-w-360 gap-12 px-5 py-16 sm:px-8 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] lg:px-14">
-
+      <footer className="border-t border-border bg-card text-foreground">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 md:grid-cols-2 lg:grid-cols-4 lg:px-12">
           <div>
-            <Link href="/" className="text-3xl font-black tracking-[-0.07em]">
-              pizza<span className="text-[#FFB45B]">hub.</span>
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <Flame className="h-5 w-5" />
+              </span>
+              <span className="text-2xl font-extrabold tracking-tight">
+                Pizza<span className="text-primary">Hub</span>
+              </span>
             </Link>
-
-            <p className="mt-5 max-w-xs text-sm leading-7 text-white/50">
-              PizzaHub brings pizza lovers and local pizza vendors
-              together. Explore different flavors, discover local
-              businesses, and enjoy a convenient online ordering experience.
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              Connecting pizza lovers with trusted local artisan kitchens.
+              Fresh ingredients, stone-baked crusts, and seamless tracking.
             </p>
           </div>
 
           <div>
-            <h3 className="text-xs font-black tracking-[0.15em] text-[#FFB45B]">
-              EXPLORE
-            </h3>
-
-            <div className="mt-6 flex flex-col gap-4 text-sm text-white/60">
-              <Link href="/" className="hover:text-white">
-                Home
-              </Link>
-              <Link href="/menu" className="hover:text-white">
-                Explore Menu
-              </Link>
-              <a href="#categories" className="hover:text-white">
-                Categories
-              </a>
-              <a href="#about" className="hover:text-white">
-                About PizzaHub
-              </a>
-            </div>
+            <h4 className="text-xs font-extrabold uppercase tracking-[0.18em] text-primary">
+              Navigation
+            </h4>
+            <ul className="mt-5 space-y-3 text-sm text-muted-foreground">
+              <li>
+                <Link href="/" className="transition hover:text-foreground">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/menu" className="transition hover:text-foreground">
+                  Browse Menu
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="#categories"
+                  className="transition hover:text-foreground"
+                >
+                  Pizza Categories
+                </a>
+              </li>
+              <li>
+                <a href="#why-us" className="transition hover:text-foreground">
+                  Why Choose PizzaHub
+                </a>
+              </li>
+            </ul>
           </div>
 
           <div>
-            <h3 className="text-xs font-black tracking-[0.15em] text-[#FFB45B]">
-              ACCOUNT
-            </h3>
-
-            <div className="mt-6 flex flex-col gap-4 text-sm text-white/60">
-              <Link href="/login" className="hover:text-white">
-                Sign In
-              </Link>
-              <Link href="/register" className="hover:text-white">
-                Create Account
-              </Link>
-              <Link href="/register" className="hover:text-white">
-                Become a Vendor
-              </Link>
-            </div>
+            <h4 className="text-xs font-extrabold uppercase tracking-[0.18em] text-primary">
+              Account &amp; Vendors
+            </h4>
+            <ul className="mt-5 space-y-3 text-sm text-muted-foreground">
+              <li>
+                <Link
+                  href="/login"
+                  className="transition hover:text-foreground"
+                >
+                  Sign In
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/register"
+                  className="transition hover:text-foreground"
+                >
+                  Create Customer Account
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/register"
+                  className="transition hover:text-foreground"
+                >
+                  Join as a Vendor
+                </Link>
+              </li>
+            </ul>
           </div>
 
           <div>
-            <h3 className="text-xs font-black tracking-[0.15em] text-[#FFB45B]">
-              GET IN TOUCH
-            </h3>
-
-            <div className="mt-6 flex flex-col gap-4 text-sm text-white/60">
-              <p>Bangladesh</p>
+            <h4 className="text-xs font-extrabold uppercase tracking-[0.18em] text-primary">
+              Contact &amp; Socials
+            </h4>
+            <div className="mt-5 space-y-3 text-sm text-muted-foreground">
+              <p>Dhaka, Bangladesh</p>
               <a
                 href="mailto:support@pizzahub.com"
-                className="transition hover:text-white"
+                className="block transition hover:text-foreground"
               >
                 support@pizzahub.com
               </a>
-              <a href="#vendor" className="hover:text-white">
-                Partner With Us
-              </a>
+              <p>+880 1700-000000</p>
+
+              {/* Social Links with New X Logo */}
+              <div className="flex items-center gap-3 pt-2">
+                <a
+                  href="https://x.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Follow PizzaHub on X"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    className="h-4 w-4 fill-current"
+                  >
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </a>
+                <a
+                  href="https://facebook.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="PizzaHub on Facebook"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-xs font-bold text-foreground transition hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  FB
+                </a>
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="PizzaHub on Instagram"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-xs font-bold text-foreground transition hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  IG
+                </a>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-white/10 px-5 py-6 text-center text-xs text-white/40">
-          © 2026 PizzaHub. All rights reserved.
+        <div className="border-t border-border px-5 py-6 text-center text-xs text-muted-foreground">
+          © 2026 PizzaHub. All rights reserved. Crafted with fresh ingredients
+          &amp; love.
         </div>
       </footer>
     </main>
