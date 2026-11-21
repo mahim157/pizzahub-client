@@ -1,21 +1,25 @@
-
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
+import { useTheme } from "next-themes";
 import {
   User,
   Mail,
   LockKeyhole,
   Eye,
   EyeOff,
-  Pizza,
+  Flame,
   ArrowRight,
   Store,
   ShoppingBag,
   CheckCircle2,
+  Image as ImageIcon,
+  Loader2,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
@@ -23,18 +27,27 @@ type AccountRole = "customer" | "vendor";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [image, setImage] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<AccountRole>("customer");
   const [businessName, setBusinessName] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,7 +61,9 @@ export default function RegisterPage() {
     }
 
     if (!/[A-Z]/.test(password) || !/[a-z]/.test(password)) {
-      setError("Password must contain at least one uppercase and one lowercase letter.");
+      setError(
+        "Password must contain at least one uppercase and one lowercase letter."
+      );
       return;
     }
 
@@ -58,7 +73,7 @@ export default function RegisterPage() {
     }
 
     if (role === "vendor" && !businessName.trim()) {
-      setError("Please enter your business name.");
+      setError("Please enter your restaurant or business name.");
       return;
     }
 
@@ -69,21 +84,27 @@ export default function RegisterPage() {
         name: name.trim(),
         email: email.trim(),
         password,
+        ...(image.trim() ? { image: image.trim() } : {}),
         role,
-        ...(role === "vendor"
-          ? { businessName: businessName.trim() }
-          : {}),
+        ...(role === "vendor" ? { businessName: businessName.trim() } : {}),
       });
 
       if (result.error) {
-        setError(result.error.message || "Registration failed. Please try again.");
+        setError(
+          result.error.message || "Registration failed. Please try again."
+        );
         return;
       }
 
-      setSuccess("Account created successfully! Redirecting...");
+      setSuccess("Account created successfully! Redirecting to your dashboard...");
 
-      router.push("/menu");
-      router.refresh();
+      const targetRoute =
+        role === "vendor" ? "/dashboard/vendor" : "/dashboard/customer";
+
+      setTimeout(() => {
+        router.push(targetRoute);
+        router.refresh();
+      }, 900);
     } catch (err) {
       console.error("Registration error:", err);
       setError("Something went wrong. Please try again.");
@@ -92,152 +113,176 @@ export default function RegisterPage() {
     }
   };
 
-  return (
-    <main className="min-h-screen bg-[#F4F6FA]">
-      <div className="grid min-h-screen lg:grid-cols-2">
+  const handleGoogleSignUp = async () => {
+    setError("");
+    setSuccess("");
+    setGoogleLoading(true);
 
-        {/* Left Side */}
-        <section className="relative hidden overflow-hidden bg-[#151D32] p-12 text-white lg:flex lg:flex-col lg:justify-between xl:p-16">
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/menu",
+      });
+    } catch (err) {
+      console.error("Google sign up error:", err);
+      setError("Google authentication failed. Please try again.");
+      setGoogleLoading(false);
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="grid min-h-screen lg:grid-cols-2">
+        {/* Left Branding Panel */}
+        <section className="relative hidden overflow-hidden border-r border-border bg-secondary p-12 lg:flex lg:flex-col lg:justify-between xl:p-16">
           <Link href="/" className="flex w-fit items-center gap-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F06A35] text-2xl font-black">
-              P
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-xs">
+              <Flame className="h-6 w-6" />
             </span>
-            <span className="text-3xl font-black tracking-[-0.07em]">
-              pizza<span className="text-[#FFB45B]">hub.</span>
+            <span className="text-2xl font-extrabold tracking-tight">
+              Pizza<span className="text-primary">Hub</span>
             </span>
           </Link>
 
           <div className="relative z-10 max-w-xl">
-            <p className="text-xs font-black tracking-[0.22em] text-[#FFB45B]">
+            <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-primary">
               JOIN THE PIZZAHUB COMMUNITY
             </p>
 
-            <h1 className="mt-6 text-6xl font-black leading-[1.08] tracking-[-0.065em] xl:text-7xl">
+            <h1 className="mt-5 text-5xl font-extrabold leading-[1.08] tracking-tight xl:text-6xl">
               Great pizza.
               <br />
-              Great people.
+              Local kitchens.
               <br />
-              <span className="font-serif font-medium italic text-[#FFB45B]">
+              <span className="font-serif italic font-bold text-primary">
                 One community.
               </span>
             </h1>
 
-            <p className="mt-7 max-w-md text-sm leading-8 text-white/55">
-              Create your account and discover amazing local pizza vendors.
-              Whether you love pizza or sell it, there is a place for you here.
+            <p className="mt-6 max-w-md text-sm leading-7 text-muted-foreground">
+              Create your account to order hot, wood-fired pizzas from
+              verified local vendors—or register your own pizzeria to reach
+              hungry customers nearby.
             </p>
 
-            <div className="mt-9 space-y-4">
+            <div className="mt-8 space-y-3.5">
               {[
-                "Discover local pizza vendors",
-                "Explore delicious menu options",
-                "Manage your orders easily",
+                "Browse verified local pizza kitchens & artisan menus",
+                "Schedule deliveries and track real-time order updates",
+                "Vendors can publish menus and upgrade to Premium",
               ].map((item) => (
-                <div key={item} className="flex items-center gap-3 text-sm text-white/75">
-                  <CheckCircle2 size={18} className="text-[#FFB45B]" />
-                  {item}
+                <div
+                  key={item}
+                  className="flex items-center gap-3 text-sm text-foreground/85"
+                >
+                  <CheckCircle2 size={18} className="shrink-0 text-primary" />
+                  <span>{item}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-t border-white/15 pt-6 text-xs text-white/40">
+          <div className="flex items-center justify-between border-t border-border pt-6 text-xs text-muted-foreground">
             <span>© 2026 PizzaHub</span>
-            <span>Discover. Choose. Enjoy.</span>
+            <span>Hot &amp; Fresh Pizza Delivered</span>
           </div>
-
-          <div className="absolute -bottom-32 -right-20 h-96 w-96 rounded-full border border-[#F06A35]/20" />
-          <div className="absolute -bottom-20 -right-8 h-72 w-72 rounded-full border border-[#F06A35]/20" />
         </section>
 
-        {/* Right Side */}
-        <section className="flex items-center justify-center px-5 py-12 sm:px-10">
+        {/* Right Form Panel */}
+        <section className="relative flex items-center justify-center px-5 py-10 sm:px-10">
+          {mounted && (
+            <button
+              type="button"
+              onClick={() =>
+                setTheme(resolvedTheme === "dark" ? "light" : "dark")
+              }
+              aria-label="Toggle color theme"
+              className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition hover:border-primary hover:text-primary"
+            >
+              {resolvedTheme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
+          )}
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.45 }}
             className="w-full max-w-md"
           >
+            {/* Mobile Logo */}
             <Link
               href="/"
-              className="mb-10 flex w-fit items-center gap-2 lg:hidden"
+              className="mb-8 flex w-fit items-center gap-2.5 lg:hidden"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F06A35] text-xl font-black text-white">
-                P
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <Flame className="h-5 w-5" />
               </span>
-              <span className="text-2xl font-black tracking-[-0.07em]">
-                pizza<span className="text-[#F06A35]">hub.</span>
+              <span className="text-2xl font-extrabold tracking-tight">
+                Pizza<span className="text-primary">Hub</span>
               </span>
             </Link>
 
-            <div className="mb-7">
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFF0E7] text-[#F06A35]">
-                <Pizza size={28} />
-              </div>
-
-              <p className="text-xs font-black tracking-[0.2em] text-[#F06A35]">
+            <div className="mb-6">
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">
                 CREATE YOUR ACCOUNT
               </p>
-
-              <h2 className="mt-3 text-4xl font-black tracking-[-0.06em] text-[#192238]">
-                Get started!
+              <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Get started today
               </h2>
-
-              <p className="mt-3 text-sm leading-7 text-[#68738A]">
-                Join PizzaHub and enjoy a better pizza experience.
+              <p className="mt-2 text-sm text-muted-foreground">
+                Choose your role and join PizzaHub in less than a minute.
               </p>
             </div>
 
+            {/* Google Authentication */}
+            <button
+              type="button"
+              onClick={handleGoogleSignUp}
+              disabled={googleLoading || loading}
+              className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border bg-card text-sm font-bold text-foreground shadow-xs transition hover:bg-secondary disabled:opacity-60"
+            >
+              {googleLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              ) : (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="#EA4335"
+                    d="M12 5c1.617 0 3.077.556 4.223 1.649l3.168-3.168C17.475 1.694 14.977.667 12 .667 7.574.667 3.743 3.204 1.88 6.91l3.691 2.864C6.44 7.152 8.993 5 12 5z"
+                  />
+                  <path
+                    fill="#4285F4"
+                    d="M23.49 12.275c0-.85-.076-1.668-.218-2.458H12v4.651h6.443c-.278 1.497-1.121 2.766-2.39 3.615l3.679 2.855c2.152-1.984 3.758-4.906 3.758-8.663z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.571 14.226A6.993 6.993 0 0 1 5.206 12c0-.774.133-1.526.365-2.226L1.88 6.91A11.318 11.318 0 0 0 .667 12c0 1.825.437 3.551 1.213 5.09l3.691-2.864z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23.333c3.24 0 5.957-1.074 7.943-2.905l-3.679-2.855c-1.074.72-2.448 1.145-4.264 1.145-3.007 0-5.56-2.152-6.429-5.044L1.88 16.538C3.743 20.244 7.574 23.333 12 23.333z"
+                  />
+                </svg>
+              )}
+              Continue with Google
+            </button>
+
+            <div className="my-5 flex items-center gap-3">
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Or register with email
+              </span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
             <form onSubmit={handleRegister} className="space-y-4">
-
-              {/* Full Name */}
+              {/* Role Selection */}
               <div>
-                <label htmlFor="name" className="mb-2 block text-sm font-bold text-[#192238]">
-                  Full Name
-                </label>
-
-                <div className="flex items-center gap-3 rounded-xl border border-[#DFE4ED] bg-white px-4 focus-within:border-[#F06A35]">
-                  <User size={18} className="shrink-0 text-[#68738A]" />
-
-                  <input
-                    id="name"
-                    type="text"
-                    required
-                    autoComplete="name"
-                    placeholder="Enter your full name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="h-12 w-full bg-transparent text-sm text-[#192238] outline-none placeholder:text-[#A0A9B8]"
-                  />
-                </div>
-              </div>
-
-              {/* Email */}
-              <div>
-                <label htmlFor="email" className="mb-2 block text-sm font-bold text-[#192238]">
-                  Email Address
-                </label>
-
-                <div className="flex items-center gap-3 rounded-xl border border-[#DFE4ED] bg-white px-4 focus-within:border-[#F06A35]">
-                  <Mail size={18} className="shrink-0 text-[#68738A]" />
-
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-12 w-full bg-transparent text-sm text-[#192238] outline-none placeholder:text-[#A0A9B8]"
-                  />
-                </div>
-              </div>
-
-              {/* Account Role */}
-              <div>
-                <label className="mb-2 block text-sm font-bold text-[#192238]">
-                  Choose Account Type
+                <label className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                  Account Role *
                 </label>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -246,19 +291,23 @@ export default function RegisterPage() {
                     onClick={() => setRole("customer")}
                     className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
                       role === "customer"
-                        ? "border-[#F06A35] bg-[#FFF4ED]"
-                        : "border-[#DFE4ED] bg-white"
+                        ? "border-primary bg-accent"
+                        : "border-border bg-card hover:bg-secondary/50"
                     }`}
                   >
                     <ShoppingBag
                       size={20}
-                      className={role === "customer" ? "text-[#F06A35]" : "text-[#68738A]"}
+                      className={
+                        role === "customer"
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                      }
                     />
                     <span>
-                      <span className="block text-sm font-bold text-[#192238]">
+                      <span className="block text-sm font-extrabold">
                         Customer
                       </span>
-                      <span className="block text-xs text-[#68738A]">
+                      <span className="block text-xs text-muted-foreground">
                         Order pizza
                       </span>
                     </span>
@@ -269,119 +318,209 @@ export default function RegisterPage() {
                     onClick={() => setRole("vendor")}
                     className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
                       role === "vendor"
-                        ? "border-[#F06A35] bg-[#FFF4ED]"
-                        : "border-[#DFE4ED] bg-white"
+                        ? "border-primary bg-accent"
+                        : "border-border bg-card hover:bg-secondary/50"
                     }`}
                   >
                     <Store
                       size={20}
-                      className={role === "vendor" ? "text-[#F06A35]" : "text-[#68738A]"}
+                      className={
+                        role === "vendor"
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                      }
                     />
                     <span>
-                      <span className="block text-sm font-bold text-[#192238]">
+                      <span className="block text-sm font-extrabold">
                         Vendor
                       </span>
-                      <span className="block text-xs text-[#68738A]">
-                        Sell pizza
+                      <span className="block text-xs text-muted-foreground">
+                        Restaurant owner
                       </span>
                     </span>
                   </button>
                 </div>
               </div>
 
-              {/* Business Name */}
+              {/* Full Name */}
+              <div>
+                <label
+                  htmlFor="name"
+                  className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-muted-foreground"
+                >
+                  Full Name *
+                </label>
+                <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-4 focus-within:border-primary">
+                  <User size={18} className="shrink-0 text-muted-foreground" />
+                  <input
+                    id="name"
+                    type="text"
+                    required
+                    autoComplete="name"
+                    placeholder="Enter your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="h-11 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              {/* Business Name (Vendor Only) */}
               {role === "vendor" && (
                 <div>
                   <label
                     htmlFor="businessName"
-                    className="mb-2 block text-sm font-bold text-[#192238]"
+                    className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-muted-foreground"
                   >
-                    Business Name
+                    Restaurant / Business Name *
                   </label>
-
-                  <div className="flex items-center gap-3 rounded-xl border border-[#DFE4ED] bg-white px-4 focus-within:border-[#F06A35]">
-                    <Store size={18} className="shrink-0 text-[#68738A]" />
-
+                  <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-4 focus-within:border-primary">
+                    <Store size={18} className="shrink-0 text-primary" />
                     <input
                       id="businessName"
                       type="text"
                       required
-                      placeholder="Enter your business name"
+                      placeholder="e.g., Bella Napoli Wood-Fired Pizza"
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
-                      className="h-12 w-full bg-transparent text-sm text-[#192238] outline-none placeholder:text-[#A0A9B8]"
+                      className="h-11 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                     />
                   </div>
                 </div>
               )}
 
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-muted-foreground"
+                >
+                  Email Address *
+                </label>
+                <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-4 focus-within:border-primary">
+                  <Mail size={18} className="shrink-0 text-muted-foreground" />
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-11 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              {/* Optional Profile Image */}
+              <div>
+                <label
+                  htmlFor="image"
+                  className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-muted-foreground"
+                >
+                  Profile Image URL{" "}
+                  <span className="font-normal lowercase">
+                    (optional, can be skipped)
+                  </span>
+                </label>
+                <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-4 focus-within:border-primary">
+                  <ImageIcon
+                    size={18}
+                    className="shrink-0 text-muted-foreground"
+                  />
+                  <input
+                    id="image"
+                    type="url"
+                    placeholder="https://example.com/avatar.jpg"
+                    value={image}
+                    onChange={(e) => setImage(e.target.value)}
+                    className="h-11 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
               {/* Password */}
               <div>
-                <label htmlFor="password" className="mb-2 block text-sm font-bold text-[#192238]">
-                  Password
+                <label
+                  htmlFor="password"
+                  className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-muted-foreground"
+                >
+                  Password *
                 </label>
-
-                <div className="flex items-center gap-3 rounded-xl border border-[#DFE4ED] bg-white px-4 focus-within:border-[#F06A35]">
-                  <LockKeyhole size={18} className="shrink-0 text-[#68738A]" />
-
+                <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-4 focus-within:border-primary">
+                  <LockKeyhole
+                    size={18}
+                    className="shrink-0 text-muted-foreground"
+                  />
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     required
                     autoComplete="new-password"
-                    placeholder="Minimum 6 characters"
+                    placeholder="Min 6 chars, 1 uppercase & 1 lowercase"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 w-full bg-transparent text-sm text-[#192238] outline-none placeholder:text-[#A0A9B8]"
+                    className="h-11 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                   />
-
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-[#68738A] hover:text-[#F06A35]"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="text-muted-foreground hover:text-primary"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
-                    {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
               {/* Confirm Password */}
               <div>
-                <label htmlFor="confirmPassword" className="mb-2 block text-sm font-bold text-[#192238]">
-                  Confirm Password
+                <label
+                  htmlFor="confirmPassword"
+                  className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-muted-foreground"
+                >
+                  Confirm Password *
                 </label>
-
-                <div className="flex items-center gap-3 rounded-xl border border-[#DFE4ED] bg-white px-4 focus-within:border-[#F06A35]">
-                  <LockKeyhole size={18} className="shrink-0 text-[#68738A]" />
-
+                <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-4 focus-within:border-primary">
+                  <LockKeyhole
+                    size={18}
+                    className="shrink-0 text-muted-foreground"
+                  />
                   <input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     required
                     autoComplete="new-password"
-                    placeholder="Confirm your password"
+                    placeholder="Re-enter your password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="h-12 w-full bg-transparent text-sm text-[#192238] outline-none placeholder:text-[#A0A9B8]"
+                    className="h-11 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                   />
-
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="text-[#68738A] hover:text-[#F06A35]"
-                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    onClick={() =>
+                      setShowConfirmPassword(!showConfirmPassword)
+                    }
+                    className="text-muted-foreground hover:text-primary"
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
                   >
-                    {showConfirmPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                    {showConfirmPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
                   </button>
                 </div>
               </div>
 
-              {/* Error Message */}
               {error && (
                 <div
                   role="alert"
-                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+                  className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
                 >
                   {error}
                 </div>
@@ -390,28 +529,35 @@ export default function RegisterPage() {
               {success && (
                 <div
                   role="status"
-                  className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+                  className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-600 dark:text-emerald-400"
                 >
                   {success}
                 </div>
               )}
 
-              {/* Submit */}
               <button
                 type="submit"
-                disabled={loading}
-                className="flex h-14 w-full items-center justify-center gap-3 rounded-full bg-[#F06A35] text-sm font-bold text-white shadow-lg shadow-orange-900/10 transition hover:-translate-y-0.5 hover:bg-[#D95628] disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={loading || googleLoading}
+                className="flex h-13 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-extrabold text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Creating Account..." : "Create Account"}
-                {!loading && <ArrowRight size={18} />}
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    Create Account <ArrowRight size={18} />
+                  </>
+                )}
               </button>
             </form>
 
-            <p className="mt-7 text-center text-sm text-[#68738A]">
+            <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="font-bold text-[#F06A35] transition hover:text-[#D95628]"
+                className="font-extrabold text-primary transition hover:opacity-80"
               >
                 Sign In
               </Link>
@@ -419,7 +565,7 @@ export default function RegisterPage() {
 
             <Link
               href="/"
-              className="mt-6 block text-center text-xs font-semibold text-[#68738A] transition hover:text-[#F06A35]"
+              className="mt-4 block text-center text-xs font-bold text-muted-foreground transition hover:text-primary"
             >
               ← Back to Homepage
             </Link>
