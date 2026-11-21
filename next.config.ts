@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
+  "https://pizzahub-client-nkpu.vercel.app";
+
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -11,6 +14,14 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${BACKEND_URL}/api/:path*`,
+      },
+    ];
   },
 };
 
