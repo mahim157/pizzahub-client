@@ -121,7 +121,7 @@ export default function RegisterPage() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/menu",
+        callbackURL: `${window.location.origin}${role === "vendor" ? "/dashboard/vendor" : "/dashboard/customer"}`,
       });
     } catch (err) {
       console.error("Google sign up error:", err);
@@ -575,3 +575,4 @@ export default function RegisterPage() {
     </main>
   );
 }
+
