@@ -1,81 +1,374 @@
-<div align="center">
+# 🍕 PizzaHub Client
 
-# 🍕 PizzaHub — Artisan Pizza Ordering & Multi-Vendor Marketplace
+**A Modern Artisan Pizza Ordering & Multi-Vendor Marketplace**
 
-**A modern, full-stack artisan pizza marketplace connecting pizza enthusiasts with local pizzerias and kitchen vendors.**
+PizzaHub is a modern, full-stack pizza ordering and delivery platform that connects customers with local pizzerias and restaurant vendors. Built with **Next.js 16, React 19, TypeScript, and Tailwind CSS**, the platform delivers a seamless food ordering experience with dedicated dashboards for Customers, Vendors, and Admins.
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-007ACC?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Stripe](https://img.shields.io/badge/Stripe-Payments-626CD9?style=for-the-badge&logo=stripe)](https://stripe.com/)
-
-[Live Demo](#) · [Report Bug](https://github.com/mahim157/pizzahub-client/issues) · [Backend Repository](https://github.com/mahim157/pizzahub-server)
-
-</div>
+From discovering artisan pizzas to managing restaurant operations, tracking orders, and handling vendor subscriptions, PizzaHub provides a complete multi-vendor marketplace experience.
 
 ---
 
-## 📖 Overview
+## 🌐 Live Application
 
-**PizzaHub** is an end-to-end food ordering and kitchen management platform built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, and **Tailwind CSS**. It delivers tailored, role-based dashboards for **Customers**, **Vendors**, and **Admins**—featuring real-time order tracking, verified customer ratings & reviews, wishlist management, Stripe vendor subscriptions, and administrative moderation tools.
+| Service | Live Link |
+|---|---|
+| Frontend Application | [PizzaHub Client](https://pizzahub-client-2wd4.vercel.app) |
+| Backend API | [PizzaHub Server](https://pizzahub-client-nkpu.vercel.app) |
+
+## 🔑 Demo Login Credentials
+
+Use the following demo accounts to explore PizzaHub's role-based dashboards and functionalities.
+
+| Role | Email | Password |
+|---|---|---|
+| **Admin** | `admin@pizzahub.com` | `Admin1234!` |
+| **Vendor** | `vendor@pizzahub.com` | `Vendor1234` |
+
+### Demo Account Access
+
+- **Admin:** Access the Admin Dashboard to manage users, review menu items, and monitor platform activities.
+- **Vendor:** Access the Vendor Dashboard to manage menu items, handle customer orders, and explore subscription features.
+
+**Note:** These credentials are provided for demonstration and evaluation purposes only. Please do not use them for personal or production accounts.
+
+Google Sign-In is also available where configured.
+
+## 📂 GitHub Repositories
+
+| Repository | Link |
+|---|---|
+| Frontend Repository | [pizzahub-client](https://github.com/mahim157/pizzahub-client) |
+| Backend Repository | [pizzahub-server](https://github.com/mahim157/pizzahub-server) |
 
 ---
 
 ## ✨ Key Features
 
 ### 🛒 Customer Experience
-- **Smart Menu Discovery:** Browse approved artisan pizzas with real-time search, category filtering, and price sorting.
-- **Interactive Pizza Details & Reviews (`/menu/[id]`):** Explore ingredients, restaurant info, average ratings, and submit verified `1–5 star` reviews.
-- **Personal Wishlist (`/dashboard/customer/favorites`):** Save favorite pizzas to a dedicated wishlist for instant reordering.
-- **Live Order Progress Tracker (`/dashboard/customer/my-orders`):** Track order statuses step-by-step (`Pending` → `Preparing` → `Out for Delivery` → `Delivered`).
-- **Profile Management (`/dashboard/customer/profile`):** Update personal details and avatar image seamlessly.
 
-### 👨‍🍳 Vendor / Kitchen Dashboard
-- **Kitchen Analytics (`/dashboard/vendor`):** Monitor menu performance, incoming orders, and total earnings at a glance.
-- **Menu Builder & Management (`/dashboard/vendor/add-item` & `/my-menu`):** Add, edit, and manage pizza items with integrated **ImgBB** cloud image uploads.
-- **Order Fulfillment (`/dashboard/vendor/orders`):** Update incoming customer order statuses in real time.
-- **Premium Kitchen Subscription (`/dashboard/vendor/subscription`):** Upgrade to a **Premium Plan** via **Stripe Checkout** for priority visibility.
-- **Vendor Profile Settings (`/dashboard/vendor/profile`):** Customize restaurant/business name, manager info, and kitchen branding.
+- **Smart Menu Discovery:** Browse approved pizza items with search, category filtering, location filtering, and price sorting.
+- **Interactive Pizza Details:** Explore pizza descriptions, images, restaurant information, and pricing.
+- **Ratings & Reviews:** Submit ratings and reviews for pizza items.
+- **Personal Wishlist:** Save favorite pizzas for convenient access.
+- **Order Management:** Place orders with delivery date, address, and special instructions.
+- **Order Tracking:** Follow order progress through status updates.
+- **Order Cancellation:** Cancel eligible pending orders.
+- **Profile Management:** Update personal information and profile images.
 
-### 🛡️ Admin Command Center
-- **Platform Snapshot (`/dashboard/admin`):** Real-time insights into registered users, active vendors, and catalog health.
-- **Menu Moderation Queue (`/dashboard/admin/menu-approvals`):** Review, approve, or reject newly submitted vendor pizzas before public listing.
-- **User & Role Governance (`/dashboard/admin/users`):** Manage user roles (`Customer`, `Vendor`, `Admin`) and account statuses.
-- **Admin Profile & CSV Reporting (`/dashboard/admin/profile`):** Update admin credentials and export full platform menu reports as `.csv`.
+### 👨‍🍳 Vendor Dashboard
+
+- **Dashboard Analytics:** Monitor menu items, customer orders, and subscription information.
+- **Menu Management:** Create, update, delete, and manage pizza menu items.
+- **Image Upload:** Upload pizza images using ImgBB integration.
+- **Order Management:** View incoming orders and accept or reject pending requests.
+- **Premium Subscription:** Upgrade to a Premium plan through Stripe Checkout.
+- **Restaurant Profile:** Manage restaurant information and business details.
+- **Menu Approval:** Track menu item approval and publication status.
+
+### 🛡️ Admin Dashboard
+
+- **Platform Overview:** Monitor registered users, vendors, customers, menu items, and transactions.
+- **User Management:** View, search, block, and unblock registered users.
+- **Menu Moderation:** Review submitted menu items and approve or reject them.
+- **Menu Management:** Manage published menu items.
+- **Transaction Monitoring:** View subscription payment records.
+- **Admin Profile:** Manage administrator profile information.
+
+### 🎨 UI/UX & Additional Features
+
+- Responsive layouts for mobile, tablet, and desktop.
+- Modern pizza-themed interface.
+- Dark and light theme support.
+- Reusable UI components.
+- Smooth animations using Motion.
+- Interactive navigation and role-based dashboards.
+- Loading, empty, success, and error states.
+- Toast notifications for user feedback.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Technology Stack
 
-| Layer | Technology |
-| :--- | :--- |
-| **Framework** | Next.js 16 (App Router, Turbopack) |
-| **UI Library** | React 19, Lucide Icons |
-| **Language** | TypeScript |
-| **Styling** | Tailwind CSS v4 (Dark/Light Theme Support) |
-| **Authentication** | Better Auth Client (Session & JWT Bearer Support) |
-| **Payments** | Stripe Checkout Integration |
-| **Image Hosting** | ImgBB API Integration |
+| Category | Technologies |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| UI Library | React 19 |
+| Programming Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| UI Components | ShadCN UI |
+| Icons | Lucide React |
+| Authentication | Better Auth |
+| Authorization | JWT & Role-Based Access |
+| Animations | Motion |
+| Payment Integration | Stripe Checkout |
+| Image Hosting | ImgBB |
+| Deployment | Vercel |
+| Version Control | Git & GitHub |
+
+---
+
+## 👥 User Roles
+
+PizzaHub provides three dedicated user experiences.
+
+| Role | Main Responsibilities |
+|---|---|
+| Customer | Browse pizzas, manage favorites, place orders, and track deliveries |
+| Vendor | Manage restaurant menus, handle customer orders, and manage subscriptions |
+| Admin | Manage users, moderate menu items, and monitor platform transactions |
+
+Each role has access to its own dashboard and authorized features.
 
 ---
 
 ## 📁 Project Architecture
 
+The frontend follows the Next.js App Router architecture with reusable components and organized application logic.
+
 ```text
 client/
+│
 ├── app/
 │   ├── dashboard/
-│   │   ├── admin/               # Platform analytics, menu approvals, user management & profile
-│   │   ├── customer/            # Customer overview, order tracking, wishlist & profile
-│   │   ├── vendor/              # Kitchen overview, add-item, my-menu, orders, subscription & profile
-│   │   └── layout.tsx           # Role-based responsive dashboard sidebar & navigation shell
-│   ├── login/                   # Authentication login view
-│   ├── register/                # Customer & Vendor onboarding view
-│   ├── menu/                    # Public menu catalog & dynamic pizza details (/menu/[id])
-│   ├── payment/                 # Stripe checkout success & cancellation views
-│   ├── layout.tsx               # Root layout & global providers
-│   └── page.tsx                 # High-converting landing page
-├── components/                  # Reusable UI components & Navbar/Footer
-├── lib/                         # API fetch utilities & Better Auth client configuration
-└── public/                      # Static assets & brand media
+│   │   ├── admin/
+│   │   │   ├── users/
+│   │   │   ├── menu-approvals/
+│   │   │   └── profile/
+│   │   │
+│   │   ├── customer/
+│   │   │   ├── my-orders/
+│   │   │   ├── favorites/
+│   │   │   └── profile/
+│   │   │
+│   │   ├── vendor/
+│   │   │   ├── add-item/
+│   │   │   ├── my-menu/
+│   │   │   ├── orders/
+│   │   │   ├── subscription/
+│   │   │   └── profile/
+│   │   │
+│   │   └── layout.tsx
+│   │
+│   ├── login/
+│   ├── register/
+│   ├── menu/
+│   │   └── [id]/
+│   │
+│   ├── payment/
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── globals.css
+│
+├── components/
+│   ├── ui/
+│   ├── Navbar/
+│   └── Footer/
+│
+├── lib/
+│   ├── auth-client.ts
+│   └── API utilities
+│
+├── public/
+│   └── Static assets and images
+│
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+*Note: The architecture above illustrates the main application structure. Some folders and filenames may vary according to the actual implementation.*
+
+---
+
+## 🔐 Authentication & Authorization
+
+PizzaHub uses Better Auth for authentication and JWT-based authorization.
+
+Authentication features include:
+
+- Email and password login.
+- User registration.
+- Google authentication.
+- Session management.
+- Role-based navigation.
+- Protected dashboard access.
+- JWT-based communication with the backend.
+
+Users are redirected to the appropriate dashboard according to their assigned role.
+
+Authorization is also verified by the backend to prevent unauthorized access to protected resources.
+
+---
+
+## 💳 Payment Integration
+
+PizzaHub integrates Stripe Checkout for Vendor Premium subscriptions.
+
+### Subscription Workflow
+
+1. Vendor selects the Premium subscription plan.
+2. Frontend requests a subscription session from the backend.
+3. Vendor is redirected to Stripe Checkout.
+4. Stripe processes the payment.
+5. Backend verifies the payment through Stripe webhooks.
+6. The subscription is activated after successful verification.
+
+**Important:** Stripe is used only for Vendor Premium subscriptions. Customer pizza ordering does not require Stripe payment integration.
+
+---
+
+## 🖼️ Image Management
+
+ImgBB is integrated for menu item image uploads.
+
+Vendors can upload pizza images through the protected backend API. The frontend handles the image selection and upload workflow and displays the hosted images in the menu and dashboard.
+
+---
+
+## 🚀 Getting Started
+
+Follow these instructions to run the frontend locally.
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/mahim157/pizzahub-client.git
+```
+
+### 2. Navigate to the Project Directory
+
+```bash
+cd pizzahub-client
+```
+
+### 3. Install Dependencies
+
+```bash
+npm install
+```
+
+### 4. Configure Environment Variables
+
+Create a `.env.local` file in the root directory.
+
+Configure the following variable:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+**Note:** Update the API URL according to your backend deployment environment. Add any additional environment variables required by your actual implementation.
+
+### 5. Start the Development Server
+
+```bash
+npm run dev
+```
+
+Open your browser and visit:
+
+```text
+http://localhost:3000
+```
+
+### 6. Build for Production
+
+```bash
+npm run build
+```
+
+To start the production server after building:
+
+```bash
+npm run start
+```
+
+---
+
+## ⚙️ Environment Configuration
+
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | Backend API base URL |
+
+Additional authentication or integration variables should be configured according to the application's actual environment setup.
+
+**Security:** Never commit `.env.local` or other files containing private credentials to GitHub.
+
+---
+
+## 🎯 Assignment Challenge Implementation
+
+### 1. Advanced Search & Sorting
+
+- Search menu items by name.
+- Filter items by category and location.
+- Sort menu items by price in ascending order.
+- Sort menu items by price in descending order.
+
+### 2. JWT / Token Verification
+
+- Better Auth authentication integration.
+- JWT-based authenticated API requests.
+- Protected frontend routes.
+- Role-based dashboard navigation.
+- Backend-side authorization verification.
+
+### 3. Professional UI/UX
+
+- Modern artisan pizza marketplace design.
+- Responsive layouts.
+- Reusable components.
+- Consistent typography and spacing.
+- Smooth animations and interactive elements.
+
+---
+
+## 🌟 Additional Features
+
+PizzaHub includes additional features that enhance the user experience:
+
+- ⭐ Menu item ratings and reviews.
+- ❤️ Customer favorites and wishlist.
+- 🌗 Dark and light mode.
+- 📦 Order status tracking.
+- 📊 Role-based dashboard analytics.
+
+---
+
+## 📱 Responsive Design
+
+The application is designed to provide a consistent experience across:
+
+- Desktop computers.
+- Tablets.
+- Mobile devices.
+
+Navigation, menu cards, dashboards, and forms adapt to different screen sizes.
+
+---
+
+## 🔗 Related Resources
+
+- **Frontend Live:** [PizzaHub Client](https://pizzahub-client-2wd4.vercel.app)
+- **Backend Live:** [PizzaHub API](https://pizzahub-client-nkpu.vercel.app)
+- **Frontend GitHub:** [mahim157/pizzahub-client](https://github.com/mahim157/pizzahub-client)
+- **Backend GitHub:** [mahim157/pizzahub-server](https://github.com/mahim157/pizzahub-server)
+
+---
+
+## 📄 License
+
+This project was developed for academic purposes as part of Assignment 9.
+
+---
+
+<div align="center">
+
+**🍕 PizzaHub**
+
+*Bringing Local Pizzerias and Pizza Lovers Together.*
+
+Developed with ❤️ using Next.js, React, TypeScript, and MongoDB.
+
+</div>
