@@ -5,10 +5,16 @@ import {
 } from "better-auth/client/plugins";
 
 const getBaseURL = () => {
-  if (typeof window !== "undefined") {
-    return window.location.origin;
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
   }
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname === "localhost"
+  ) {
+    return "http://localhost:5000";
+  }
+  return "https://pizzahub-client-nkpu.vercel.app";
 };
 
 export const authClient = createAuthClient({

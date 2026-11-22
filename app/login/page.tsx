@@ -101,7 +101,7 @@ function LoginFormContent() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: redirectUrl || "/menu",
+        callbackURL: `${window.location.origin}${redirectUrl || "/dashboard"}`,
       });
     } catch (err) {
       console.error("Google login error:", err);
